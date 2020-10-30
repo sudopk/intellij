@@ -145,6 +145,9 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
       return state.getTestFilterForExternalProcesses();
     }
 
+    // #api201: Overridden method getBuildingTarget() uses different generic type for list in
+    // 2020.2.
+    @SuppressWarnings("unchecked")
     GoApplicationRunningState toNativeState(ExecutionEnvironment env) throws ExecutionException {
       ExecutableInfo executable = getExecutableInfo(env);
       if (executable == null || StringUtil.isEmptyOrSpaces(executable.binary.getPath())) {

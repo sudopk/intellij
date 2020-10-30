@@ -44,6 +44,8 @@ import java.util.List;
  * <p>Customizes rendering of the workspace root node to cut out the full absolute path of the
  * workspace directory.
  */
+// #api193: Overridden method getChildrenImpl() got wildcard generics added in 2020.1.
+@SuppressWarnings("unchecked")
 public class WorkspaceRootNode extends PsiDirectoryNode {
   private final WorkspaceRoot workspaceRoot;
 

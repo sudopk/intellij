@@ -25,6 +25,8 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 
 /** A PsiDirectoryNode that doesn't render module names or source roots. */
+// #api193: Overridden method getChildrenImpl() got wildcard generics added in 2020.1.
+@SuppressWarnings("unchecked")
 public class BlazePsiDirectoryNode extends PsiDirectoryNode {
 
   public BlazePsiDirectoryNode(Project project, PsiDirectory directory, ViewSettings settings) {

@@ -27,6 +27,8 @@ import com.intellij.ui.SimpleTextAttributes;
  * A PsiDirectoryNode that represents a directory root, rendering the whole directory name from the
  * workspace root.
  */
+// #api193: Overridden method getChildrenImpl() in super class got wildcard generics added in 2020.1
+@SuppressWarnings("unchecked")
 public class BlazePsiDirectoryRootNode extends BlazePsiDirectoryNode {
   public BlazePsiDirectoryRootNode(Project project, PsiDirectory directory, ViewSettings settings) {
     super(project, directory, settings);

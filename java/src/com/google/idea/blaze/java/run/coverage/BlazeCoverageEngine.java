@@ -181,6 +181,9 @@ public class BlazeCoverageEngine extends CoverageEngine {
 
   @Nullable
   @Override
+  // #api193: Overridden methods getChildren() and getChildrenNodes() have wildcard generics added
+  // in 2020.1
+  @SuppressWarnings("unchecked")
   public CoverageViewExtension createCoverageViewExtension(
       Project project, CoverageSuitesBundle suites, StateBean stateBean) {
     WorkspaceRoot root = WorkspaceRoot.fromProjectSafe(project);
@@ -243,8 +246,7 @@ public class BlazeCoverageEngine extends CoverageEngine {
 
   private static List<CoverageListNode> getTopLevelNodes(
       Project project, CoverageSuitesBundle suites, StateBean stateBean) {
-    return getTopLevelDirectories(suites)
-        .stream()
+    return getTopLevelDirectories(suites).stream()
         .map(file -> resolveFile(project, file))
         .filter(Objects::nonNull)
         .map(psiFile -> new CoverageListNode(project, psiFile, suites, stateBean))
