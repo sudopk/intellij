@@ -242,6 +242,13 @@ config_setting(
 # There will be additional versions added in the future
 java_library(
     name = "plugin_api_internal",
+    data = select_from_plugin_api_directory(
+        android_studio = [
+            ":layoutlib_data",
+        ],
+        clion = [],
+        intellij = [],
+    ),
     visibility = ["//visibility:private"],
     exports = select_from_plugin_api_directory(
         android_studio = [

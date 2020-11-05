@@ -135,8 +135,12 @@ intellij_integration_test_suite(
             "tests/integrationtests/com/google/idea/blaze/android/AswbGotoDeclarationTest.java",
             "tests/integrationtests/com/google/idea/blaze/android/run/DebuggerInfoProviderTest.java",
             "tests/integrationtests/com/google/idea/blaze/android/run/DebuggerInfoProviderTest.java",
+            "tests/integrationtests/com/google/idea/blaze/android/functional/AswbRenderTaskTest.java",
         ],
-    ),
+    ) + select_for_plugin_api({
+        "android-studio-4.1": [],
+        "android-studio-4.2": ["tests/integrationtests/com/google/idea/blaze/android/functional/AswbRenderTaskTest.java"],
+    }),
     required_plugins = "com.google.idea.bazel.aswb",
     test_package_root = "com.google.idea.blaze.android",
     runtime_deps = [
