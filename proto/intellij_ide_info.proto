@@ -78,6 +78,7 @@ message AndroidIdeInfo {
   repeated ResFolderLocation res_folders = 13;
   // Label for the target android_binary to instrument.
   string instruments = 14;
+  ArtifactLocation deploy_jar = 15;
 }
 
 // Details about an Android res folder
