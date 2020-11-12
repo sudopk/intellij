@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.sync.aspects.strategy;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -109,12 +110,26 @@ public abstract class AspectStrategy {
         .addBlazeFlags("--output_groups=" + Joiner.on(',').join(groups));
   }
 
+
   /**
    * Get the names of the output groups created by the aspect for the given {@link OutputGroup} and
    * languages.
    */
   public final ImmutableList<String> getOutputGroups(
       OutputGroup outputGroup, Set<LanguageClass> activeLanguages, boolean directDepsOnly) {
+    return getOutputGroups(outputGroup, activeLanguages, directDepsOnly, true);
+  }
+
+  /**
+   * Refer to {@link #getOutputGroups(OutputGroup, Set, boolean)}. This method lets tests skip
+   * getting output groups from {@link OutputGroupsProvider} where required.
+   */
+  @VisibleForTesting
+  public final ImmutableList<String> getOutputGroups(
+      OutputGroup outputGroup,
+      Set<LanguageClass> activeLanguages,
+      boolean directDepsOnly,
+      boolean fetchAdditionalOutputGroups) {
     TreeSet<String> outputGroups = new TreeSet<>();
     if (outputGroup.equals(OutputGroup.INFO)) {
       outputGroups.add(outputGroup.prefix + "generic");
@@ -123,6 +138,15 @@ public abstract class AspectStrategy {
         .map(l -> getOutputGroupForLanguage(outputGroup, l, directDepsOnly))
         .filter(Objects::nonNull)
         .forEach(outputGroups::add);
+
+    if (fetchAdditionalOutputGroups) {
+      OutputGroupsProvider.EP_NAME
+          .extensions()
+          .flatMap(p -> p.getAdditionalOutputGroups(outputGroup, activeLanguages).stream())
+          .filter(Objects::nonNull)
+          .forEach(outputGroups::add);
+    }
+
     return ImmutableList.copyOf(outputGroups);
   }
 

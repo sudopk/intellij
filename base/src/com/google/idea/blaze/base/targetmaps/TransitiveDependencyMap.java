@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.targetmaps;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.common.collect.Streams;
 import com.google.idea.blaze.base.ideinfo.Dependency;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -62,6 +63,38 @@ public class TransitiveDependencyMap {
 
     return getTransitiveDependenciesStream(possibleDependent, blazeProjectData.getTargetMap())
         .anyMatch(possibleDependency::equals);
+  }
+
+  /**
+   * Returns the set of targets in {@code possibleDependencies} that {@code possibleDependent}
+   * depends on.
+   *
+   * <p>The returned set will not include {@code possibleDependent} even if it is included in {@code
+   * possibleDependencies}.
+   */
+  public ImmutableSet<TargetKey> filterPossibleTransitiveDeps(
+      TargetKey possibleDependent, Collection<TargetKey> possibleDependencies) {
+    BlazeProjectData blazeProjectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (blazeProjectData == null) {
+      return ImmutableSet.of();
+    }
+    Set<TargetKey> mutableDeps = Sets.newHashSet(possibleDependencies);
+    ImmutableSet.Builder<TargetKey> foundDeps = ImmutableSet.builder();
+
+    // Using a stream iterator to exit early if all targets in `possibleDependencies` have been
+    // found
+    Iterator<TargetKey> targetItr =
+        getTransitiveDependenciesStream(possibleDependent, blazeProjectData.getTargetMap())
+            .iterator();
+    while (targetItr.hasNext() && !mutableDeps.isEmpty()) {
+      TargetKey targetKey = targetItr.next();
+      if (mutableDeps.remove(targetKey)) {
+        foundDeps.add(targetKey);
+      }
+    }
+
+    return foundDeps.build();
   }
 
   public ImmutableCollection<TargetKey> getTransitiveDependencies(TargetKey targetKey) {

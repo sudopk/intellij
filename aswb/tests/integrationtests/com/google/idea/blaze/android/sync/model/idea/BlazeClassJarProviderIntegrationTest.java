@@ -106,6 +106,8 @@ public class BlazeClassJarProviderIntegrationTest extends BlazeIntegrationTestCa
     registerApplicationComponent(ExperimentService.class, experimentService);
     experimentService.setExperimentString(
         BlazeClassFileFinderFactory.CLASS_FILE_FINDER_NAME, "TransitiveClosureClassFileFinder");
+    experimentService.setFeatureRolloutExperiment(
+        BlazeClassFileFinderFactory.useNonDefaultFinderPercent, 100);
     classFileFinder = BlazeClassFileFinderFactory.createBlazeClassFileFinder(module);
   }
 
