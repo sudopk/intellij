@@ -88,7 +88,7 @@ import javax.annotation.Nullable;
 /** Go-specific run configuration runner. */
 public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurationRunner {
 
-  private static class ExecutableInfo {
+  static class ExecutableInfo {
     final File binary;
     final File workingDir;
     final ImmutableList<String> args;
@@ -128,7 +128,7 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
       }
     }
 
-    private static ExecutableInfo getExecutableInfo(ExecutionEnvironment env) {
+    static ExecutableInfo getExecutableInfo(ExecutionEnvironment env) {
       return env.getCopyableUserData(EXECUTABLE_KEY).get();
     }
 
