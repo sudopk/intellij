@@ -32,8 +32,12 @@ import com.google.idea.blaze.java.fastbuild.FastBuildInfo;
 import com.google.idea.blaze.java.run.BlazeJavaRunConfigState;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.SystemProperties;
 import java.io.File;
@@ -45,6 +49,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPoint {
+  private static final Logger logger = Logger.getInstance(FastBuildTestEnvironmentCreator.class);
 
   private static final String OUTPUT_FILE_VARIABLE = "XML_OUTPUT_FILE";
   private static final String RUNFILES_DIR_VARIABLE = "TEST_SRCDIR";
@@ -92,9 +97,19 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
     JavaCommandBuilder commandBuilder = new JavaCommandBuilder();
     commandBuilder.setWorkingDirectory(workingDir.toFile());
 
-    commandBuilder.setJavaBinary(
+    File javaBinary =
         getJavaBinFromLauncher(
-            target, getLauncher(fastBuildInfo).orElse(null), getSwigdeps(fastBuildInfo)));
+            target, getLauncher(fastBuildInfo).orElse(null), getSwigdeps(fastBuildInfo));
+    if (!(new File(workingDir.toFile(), javaBinary.getPath()).canExecute())) {
+      Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
+      if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
+        logger.warn(
+            "No executable java binary found under target runfiles,"
+                + " using project JDK instead for fast build.");
+        javaBinary = new File(JavaSdk.getInstance().getBinPath(sdk), "java");
+      }
+    }
+    commandBuilder.setJavaBinary(javaBinary);
 
     fastBuildInfo.classpath().forEach(commandBuilder::addClasspathElement);
 
