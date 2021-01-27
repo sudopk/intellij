@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.android.sync.projectstructure;
 
+import static com.google.common.base.Verify.verify;
 import static java.util.stream.Collectors.toSet;
 
 import com.android.annotations.VisibleForTesting;
@@ -151,25 +152,31 @@ public class BlazeAndroidProjectStructureSyncer {
     for (AndroidResourceModule androidResourceModule :
         syncData.importResult.androidResourceModules) {
       targetToAndroidResourceModule.put(androidResourceModule.targetKey, androidResourceModule);
-      String moduleName = moduleNameForAndroidModule(androidResourceModule.targetKey);
-      Module module = moduleEditor.createModule(moduleName, StdModuleTypes.JAVA);
-      TargetIdeInfo target = blazeProjectData.getTargetMap().get(androidResourceModule.targetKey);
-      AndroidFacetModuleCustomizer.createAndroidFacet(
-          module,
-          target != null
-              && target.kindIsOneOf(
-                  AndroidBlazeRules.RuleTypes.ANDROID_BINARY.getKind(),
-                  AndroidBlazeRules.RuleTypes.ANDROID_TEST.getKind()));
+      if (!BlazeAndroidWorkspaceImporter.WORKSPACE_RESOURCES_TARGET_KEY.equals(
+          androidResourceModule.targetKey)) {
+        String moduleName = moduleNameForAndroidModule(androidResourceModule.targetKey);
+        Module module = moduleEditor.createModule(moduleName, StdModuleTypes.JAVA);
+        TargetIdeInfo target = blazeProjectData.getTargetMap().get(androidResourceModule.targetKey);
+        AndroidFacetModuleCustomizer.createAndroidFacet(
+            module,
+            target != null
+                && target.kindIsOneOf(
+                    AndroidBlazeRules.RuleTypes.ANDROID_BINARY.getKind(),
+                    AndroidBlazeRules.RuleTypes.ANDROID_TEST.getKind()));
+      }
     }
 
     // Configure android resource modules
     int totalOrderEntries = 0;
     Set<File> existingRoots = Sets.newHashSet();
+    LibraryTable libraryTable = ProjectLibraryTable.getInstance(project);
     for (AndroidResourceModule androidResourceModule : targetToAndroidResourceModule.values()) {
       ArtifactLocationDecoder artifactLocationDecoder =
           blazeProjectData.getArtifactLocationDecoder();
 
       File manifest = null;
+      String moduleName;
+      ModifiableRootModel modifiableRootModel;
       if (!BlazeAndroidWorkspaceImporter.WORKSPACE_RESOURCES_TARGET_KEY.equals(
           androidResourceModule.targetKey)) {
         // Calculate manifest if this is not the workspace resource module
@@ -182,32 +189,37 @@ public class BlazeAndroidProjectStructureSyncer {
         manifest =
             manifestFileForAndroidTarget(
                 project, artifactLocationDecoder, androidIdeInfo, moduleDirectory);
+        moduleName = moduleNameForAndroidModule(androidResourceModule.targetKey);
+        Module module = moduleEditor.findModule(moduleName);
+        verify(module != null);
+        modifiableRootModel = moduleEditor.editModule(module);
+
+        ArrayList<File> newRoots =
+            new ArrayList<>(
+                OutputArtifactResolver.resolveAll(
+                    project, artifactLocationDecoder, androidResourceModule.resources));
+
+        if (manifest != null) {
+          newRoots.add(manifest);
+        }
+
+        // Remove existing resource roots to silence the duplicate content root error.
+        // We can only do this if we have cyclic resource dependencies, since otherwise we risk
+        // breaking dependencies within this resource module.
+        newRoots.removeAll(existingRoots);
+        existingRoots.addAll(newRoots);
+        ResourceModuleContentRootCustomizer.setupContentRoots(modifiableRootModel, newRoots);
+        modifiableRootModel.addModuleOrderEntry(workspaceModule);
+        ++totalOrderEntries;
+
+        // Add a dependency from the workspace to the resource module
+        ModuleOrderEntry orderEntry = workspaceModifiableModel.addModuleOrderEntry(module);
+        ++totalOrderEntries;
+        orderEntry.setExported(true);
+      } else {
+        moduleName = workspaceModule.getName();
+        modifiableRootModel = workspaceModifiableModel;
       }
-
-      String moduleName = moduleNameForAndroidModule(androidResourceModule.targetKey);
-      Module module = moduleEditor.findModule(moduleName);
-      assert module != null;
-      ModifiableRootModel modifiableRootModel = moduleEditor.editModule(module);
-      LibraryTable libraryTable = ProjectLibraryTable.getInstance(project);
-
-      ArrayList<File> newRoots =
-          new ArrayList<>(
-              OutputArtifactResolver.resolveAll(
-                  project, artifactLocationDecoder, androidResourceModule.resources));
-
-      if (manifest != null) {
-        newRoots.add(manifest);
-      }
-
-      // Remove existing resource roots to silence the duplicate content root error.
-      // We can only do this if we have cyclic resource dependencies, since otherwise we risk
-      // breaking dependencies within this resource module.
-      newRoots.removeAll(existingRoots);
-      existingRoots.addAll(newRoots);
-      ResourceModuleContentRootCustomizer.setupContentRoots(modifiableRootModel, newRoots);
-
-      modifiableRootModel.addModuleOrderEntry(workspaceModule);
-      ++totalOrderEntries;
 
       for (String libraryName : androidResourceModule.resourceLibraryKeys) {
         Library lib = libraryTable.getLibraryByName(libraryName);
@@ -222,21 +234,16 @@ public class BlazeAndroidProjectStructureSyncer {
           modifiableRootModel.addLibraryEntry(lib);
         }
       }
-      // Add a dependency from the workspace to the resource module
-      ModuleOrderEntry orderEntry = workspaceModifiableModel.addModuleOrderEntry(module);
-      ++totalOrderEntries;
-      orderEntry.setExported(true);
     }
 
-    int whitelistedGenResources =
-        projectViewSet.listItems(GeneratedAndroidResourcesSection.KEY).size();
+    int allowedGenResources = projectViewSet.listItems(GeneratedAndroidResourcesSection.KEY).size();
     context.output(
         PrintOutput.log(
             String.format(
                 "Android resource module count: %d, order entries: %d, generated resources: %d",
                 syncData.importResult.androidResourceModules.size(),
                 totalOrderEntries,
-                whitelistedGenResources)));
+                allowedGenResources)));
   }
 
   public static String moduleNameForAndroidModule(TargetKey targetKey) {
@@ -320,12 +327,25 @@ public class BlazeAndroidProjectStructureSyncer {
       File manifestFile = null;
       String modulePackage;
       File moduleDirectory;
+      Module module;
       if (BlazeAndroidWorkspaceImporter.WORKSPACE_RESOURCES_TARGET_KEY.equals(
           androidResourceModule.targetKey)) {
-        // For workspace resource module, give it a dummy package name, and set module
-        // directory to workspace root. No manifest is attached to this module
+        // Until ~Jan 2021, we used to create a separate module (.workspace.resources) that included
+        // resources that were used by project, but not included in any other resource module.
+        // Starting with cl/350385526, these resources are attached to the workspace module itself
+        // and we don't create a separate module for workspace resources.
         modulePackage = BlazeAndroidWorkspaceImporter.WORKSPACE_RESOURCES_MODULE_PACKAGE;
         moduleDirectory = workspaceRoot.directory();
+        // b/177279296 revealed an issue when we removed the workspace module. To work around this
+        // we still use the workspace.resources module as long as such a module still exists in the
+        // project. Hopefully, in a couple of months, there won't be any projects around with the
+        // resources module, and we can delete this code.
+        module =
+            moduleFinder.findModuleByName(
+                moduleNameForAndroidModule(androidResourceModule.targetKey));
+        if (module == null) {
+          module = workspaceModule;
+        }
       } else {
         TargetIdeInfo target =
             Preconditions.checkNotNull(
@@ -336,15 +356,15 @@ public class BlazeAndroidProjectStructureSyncer {
         manifestFile =
             manifestFileForAndroidTarget(
                 project, artifactLocationDecoder, androidIdeInfo, moduleDirectory);
+        String moduleName = moduleNameForAndroidModule(androidResourceModule.targetKey);
+        module = moduleFinder.findModuleByName(moduleName);
+        if (module == null) {
+          log.warn("No module found for resource target: " + androidResourceModule.targetKey);
+          continue;
+        }
+        registry.put(module, androidResourceModule);
       }
 
-      String moduleName = moduleNameForAndroidModule(androidResourceModule.targetKey);
-      Module module = moduleFinder.findModuleByName(moduleName);
-      if (module == null) {
-        log.warn("No module found for resource target: " + androidResourceModule.targetKey);
-        continue;
-      }
-      registry.put(module, androidResourceModule);
       List<File> resources =
           OutputArtifactResolver.resolveAll(
               project, artifactLocationDecoder, androidResourceModule.resources);

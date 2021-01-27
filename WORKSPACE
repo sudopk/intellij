@@ -1,6 +1,5 @@
 workspace(name = "intellij_with_bazel")
 
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:jvm.bzl", "jvm_maven_import_external")
 
@@ -15,7 +14,7 @@ http_archive(
     url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2020.1.4/ideaIC-2020.1.4.zip",
 )
 
-# The plugin api for IntelliJ 2020.1. This is required to build IJwB,
+# The plugin api for IntelliJ 2020.2. This is required to build IJwB,
 # and run integration tests.
 http_archive(
     name = "intellij_ce_2020_2",
@@ -33,7 +32,7 @@ http_archive(
     url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2020.1.4/ideaIU-2020.1.4.zip",
 )
 
-# The plugin api for IntelliJ UE 2020.1. This is required to run UE-specific
+# The plugin api for IntelliJ UE 2020.2. This is required to run UE-specific
 # integration tests.
 http_archive(
     name = "intellij_ue_2020_2",
@@ -181,8 +180,17 @@ http_archive(
 http_archive(
     name = "android_studio_4_2",
     build_file = "@//intellij_platform_sdk:BUILD.android_studio42",
-    sha256 = "d97874191e011d923aa1f772308da272bced236066887593fb56c4648679f081",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/4.2.0.16/android-studio-ide-202.6939830-linux.tar.gz",
+    sha256 = "84c7bb88cf26d4f6946f39d165fade4495ee8dc3204df38d77c09b60614af90c",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/4.2.0.19/android-studio-ide-202.7033425-linux.tar.gz",
+)
+
+# The plugin api for Android Studio 2020.3. This is required to build ASwB,
+# and run integration tests.
+http_archive(
+    name = "android_studio_2020_3",
+    build_file = "@//intellij_platform_sdk:BUILD.android_studio203",
+    sha256 = "64eae480f415cad604e37d50154e4f8cedba0d13ee6a5b1e3e63019c1f81b915",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/2020.3.1.4/android-studio-2020.3.1.4-linux.tar.gz",
 )
 
 # LICENSE: Common Public License 1.0
@@ -248,7 +256,10 @@ jvm_maven_import_external(
     artifact_sha256 = "0706a455e17b67718abe212e3a77688bbe8260852fc74e3e836d9f2e76d91c27",
     licenses = ["notice"],  # Apache 2.0
     server_urls = ["https://repo1.maven.org/maven2"],
-    deps = ["@asm", "@asm-commons"]
+    deps = [
+        "@asm",
+        "@asm-commons",
+    ],
 )
 
 jvm_maven_import_external(
@@ -289,12 +300,6 @@ jvm_maven_import_external(
     artifact_sha256 = "524b43ea15ca97c68f10d5f417c4068dc88144b620d2203f0910441a769fd42f",
     licenses = ["notice"],  # Apache 2.0
     server_urls = ["https://repo1.maven.org/maven2"],
-)
-
-git_repository(
-    name = "bazel",
-    branch = "master",
-    remote = "https://github.com/bazelbuild/bazel",
 )
 
 http_archive(

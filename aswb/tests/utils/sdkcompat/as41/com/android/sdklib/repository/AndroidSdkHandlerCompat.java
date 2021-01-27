@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The Bazel Authors. All rights reserved.
+ * Copyright 2020 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.android.sync;
+package com.android.sdklib.repository;
 
-import com.android.tools.idea.model.AndroidModel;
-import javax.annotation.Nullable;
-import org.jetbrains.android.facet.AndroidFacet;
+import java.io.File;
 
-class BlazeAndroidSyncPluginCompat {
-
-  private BlazeAndroidSyncPluginCompat() {}
-
-  static boolean facetHasAndroidModel(@Nullable AndroidFacet facet) {
-    return facet != null && AndroidModel.isRequired(facet) && AndroidModel.get(facet) == null;
+/** Compat methods for {@link AndroidSdkHandler}. #api42 */
+public class AndroidSdkHandlerCompat {
+  public static void resetInstance(File sdkDir) {
+    AndroidSdkHandler.resetInstance(sdkDir);
   }
+
+  private AndroidSdkHandlerCompat() {}
 }

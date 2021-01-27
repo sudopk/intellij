@@ -64,7 +64,11 @@ java_library(
 java_library(
     name = "integration_test_utils",
     testonly = 1,
-    srcs = glob(["tests/utils/integration/**/*.java"]),
+    srcs = glob(["tests/utils/integration/**/*.java"]) + select_for_plugin_api({
+        "android-studio-4.1": glob(["tests/utils/sdkcompat/as41/com/android/sdklib/repository/*.java"]),
+        "android-studio-4.2": glob(["tests/utils/sdkcompat/as41/com/android/sdklib/repository/*.java"]),
+        "android-studio-2020.3": glob(["tests/utils/sdkcompat/as203/com/android/sdklib/repository/*.java"]),
+    }),
     deps = [
         "//base",
         "//base:integration_test_utils",
@@ -84,6 +88,7 @@ java_library(
     srcs = glob(["src/**/*.java"]) + select_for_plugin_api({
         "android-studio-4.1": glob(["sdkcompat/as41/**/*.java"]),
         "android-studio-4.2": glob(["sdkcompat/as42/**/*.java"]),
+        "android-studio-2020.3": glob(["sdkcompat/as203/**/*.java"]),
     }),
     resources = glob(["resources/**/*"]),
     deps = [
@@ -142,6 +147,7 @@ intellij_integration_test_suite(
                 "tests/integrationtests/com/google/idea/blaze/android/plugin/NdkDependenciesTest.java",
                 "tests/integrationtests/com/google/idea/blaze/android/run/DebuggerInfoProviderTest.java",
                 "tests/integrationtests/com/google/idea/blaze/android/run/DebuggerInfoProviderTest.java",
+                "tests/integrationtests/com/google/idea/blaze/android/functional/AswbRenderTaskTest.java",
             ],
         ),
         "android-studio-4.2": glob(
@@ -154,7 +160,23 @@ intellij_integration_test_suite(
                 "tests/integrationtests/com/google/idea/blaze/android/run/DebuggerInfoProviderTest.java",
             ],
         ),
+        "android-studio-2020.3": glob(
+            ["tests/integrationtests/**/*.java"],
+            exclude = [
+                "tests/integrationtests/com/google/idea/blaze/android/AswbGotoDeclarationTest.java",
+                "tests/integrationtests/com/google/idea/blaze/android/functional/AswbMergedManifestTest.java",
+                "tests/integrationtests/com/google/idea/blaze/android/plugin/NdkDependenciesTest.java",
+                "tests/integrationtests/com/google/idea/blaze/android/run/DebuggerInfoProviderTest.java",
+                "tests/integrationtests/com/google/idea/blaze/android/run/DebuggerInfoProviderTest.java",
+                # b/177371104
+                "tests/integrationtests/com/google/idea/blaze/android/functional/AswbRenderTaskTest.java",
+            ],
+        ),
     }),
+    data = [
+        "testdata/golden.png",
+        "testdata/ic_banner.png",
+    ],
     required_plugins = "com.google.idea.bazel.aswb",
     test_package_root = "com.google.idea.blaze.android",
     runtime_deps = [
