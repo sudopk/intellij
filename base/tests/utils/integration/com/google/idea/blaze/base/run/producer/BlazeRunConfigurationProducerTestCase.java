@@ -50,6 +50,7 @@ import org.junit.Before;
 public class BlazeRunConfigurationProducerTestCase extends BlazeIntegrationTestCase {
 
   protected EditorTestHelper editorTest;
+  private DataManager defaultDataManager;
 
   @Before
   public final void doSetup() {
@@ -61,6 +62,7 @@ public class BlazeRunConfigurationProducerTestCase extends BlazeIntegrationTestC
     // IntelliJ replaces the normal DataManager with a mock version in headless environments.
     // We rely on a functional DataManager in run configuration tests to recognize when multiple
     // psi elements are selected.
+    defaultDataManager = DataManager.getInstance();
     ServiceContainerUtil.registerServiceInstance(
         ApplicationManager.getApplication(),
         DataManager.class,
@@ -73,10 +75,13 @@ public class BlazeRunConfigurationProducerTestCase extends BlazeIntegrationTestC
 
   @After
   public final void doTeardown() {
+    ServiceContainerUtil.registerServiceInstance(
+        ApplicationManager.getApplication(), DataManager.class, defaultDataManager);
+
     IconManager.deactivate();
   }
 
-  protected PsiFile createAndIndexFile(WorkspacePath path, String... contents) {
+  protected PsiFile createAndIndexFile(WorkspacePath path, String... contents) throws Throwable {
     PsiFile file = workspace.createPsiFile(path, contents);
     editorTest.openFileInEditor(file); // open file to trigger update of indices
     return file;

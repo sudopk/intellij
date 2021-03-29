@@ -3,6 +3,7 @@ package com.google.idea.sdkcompat.general;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.conversion.ConversionContext;
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.diff.DiffContentFactoryImpl;
 import com.intellij.dvcs.branch.BranchType;
@@ -11,13 +12,17 @@ import com.intellij.dvcs.branch.DvcsBranchSettings;
 import com.intellij.find.findUsages.CustomUsageSearcher;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.scratch.ScratchesNamedScope;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.mock.MockVirtualFile;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -26,11 +31,14 @@ import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.EditorNotificationsImpl;
 import com.intellij.ui.EditorTextField;
@@ -38,6 +46,8 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.usages.Usage;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.Processor;
+import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.FileContentImpl;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
@@ -192,5 +202,43 @@ public final class BaseSdkCompat {
   public static Path getVMOptionsWriteFile() {
     File file = VMOptions.getWriteFile();
     return file == null ? null : file.toPath();
+  }
+  /**
+   * #api202: {@link ConversionContext#getSettingsBaseDir()} returns Path instead of File since
+   * 2020.3.
+   */
+  @Nullable
+  public static Path getSettingsBaseDirWrapper(ConversionContext context) {
+    return context.getSettingsBaseDir() == null ? null : context.getSettingsBaseDir().toPath();
+  }
+
+  // #api202 doWrapLongLinesIfNecessary not available anymore in CodeFormatterFacade
+  @SuppressWarnings({"deprecation", "UnstableApiUsage"})
+  public static void doWrapLongLinesIfNecessary(
+      Editor editor,
+      Project project,
+      Document document,
+      int startOffset,
+      int endOffset,
+      List<TextRange> enabledRanges,
+      int rightMargin,
+      PsiElement element) {
+    CodeFormatterFacade codeFormatter =
+        new CodeFormatterFacade(
+            CodeStyleSettingsManager.getSettings(project), element.getLanguage());
+
+    codeFormatter.doWrapLongLinesIfNecessary(
+        editor, element.getProject(), document, startOffset, endOffset, enabledRanges);
+  }
+
+  /** #api202: use "SearchEverywhereManager.setSelectedTabID directly" */
+  public static void setSelectedTabID(SearchEverywhereManager manager, String id) {
+    manager.setSelectedContributor(id);
+  }
+
+  /* #api202: Switch FileContentImpl.createByText to static factory method */
+  public static FileContent createVirtualFile(String... contents) {
+    return new FileContentImpl(
+        MockVirtualFile.file("Test.java"), String.join("\n", contents), /* documentStamp= */ -1);
   }
 }

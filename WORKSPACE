@@ -28,8 +28,8 @@ http_archive(
 http_archive(
     name = "intellij_ce_2020_3",
     build_file = "@//intellij_platform_sdk:BUILD.idea203",
-    sha256 = "2c621e40a8a965c7ea5e1005652d1d1dd80b8fe4241be13ef3d4df2c0b2d72c5",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2020.3.1/ideaIC-2020.3.1.zip",
+    sha256 = "fce0df34d30c8495667ab2c2df0dbb374caeb0707e5efd7fc3dcf27f1c54902d",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2020.3.3/ideaIC-2020.3.3.zip",
 )
 
 # The plugin api for IntelliJ UE 2020.1. This is required to run UE-specific
@@ -55,17 +55,8 @@ http_archive(
 http_archive(
     name = "intellij_ue_2020_3",
     build_file = "@//intellij_platform_sdk:BUILD.ue203",
-    sha256 = "ffd4e98b7a3e7cd40a66e518b01e1fb160fe03071aa6085a543decd7b825b4c3",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2020.3.1/ideaIU-2020.3.1.zip",
-)
-
-# The plugin api for CLion 2019.3. This is required to build CLwB,
-# and run integration tests.
-http_archive(
-    name = "clion_2019_3",
-    build_file = "@//intellij_platform_sdk:BUILD.clion193",
-    sha256 = "4034d47ec4bd3c8123099d4b9614031c975f8cd37977b8df31bf77b6e85caf06",
-    url = "https://download.jetbrains.com/cpp/CLion-2019.3.6.tar.gz",
+    sha256 = "330aa9a89e2277de52d02c1c18696ff5137bd9ee5a47706562199aa3be02eeac",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2020.3.3/ideaIU-2020.3.3.zip",
 )
 
 # The plugin api for CLion 2020.1. This is required to build CLwB,
@@ -86,18 +77,13 @@ http_archive(
     url = "https://download.jetbrains.com/cpp/CLion-2020.2.5.tar.gz",
 )
 
-# Python plugin for IntelliJ CE. Required at compile-time for python-specific features.
+# The plugin api for CLion 2020.3. This is required to build CLwB,
+# and run integration tests.
 http_archive(
-    name = "python_2019_3",
-    build_file_content = "\n".join([
-        "java_import(",
-        "    name = 'python',",
-        "    jars = ['python-ce/lib/python-ce.jar'],",
-        "    visibility = ['//visibility:public'],",
-        ")",
-    ]),
-    sha256 = "718750acf836c9e9c85fe4d342a619afb26932bc0d77e7adfa25be1facb8a23f",
-    url = "https://plugins.jetbrains.com/files/7322/85764/python-ce.zip",
+    name = "clion_2020_3",
+    build_file = "@//intellij_platform_sdk:BUILD.clion203",
+    sha256 = "5d49bd88b6457271464687453ff65880a4a38974575bb76f969036c692072280",
+    url = "https://download.jetbrains.com/cpp/CLion-2020.3.2.tar.gz",
 )
 
 # Python plugin for IntelliJ CE. Required at compile-time for python-specific features.
@@ -138,8 +124,8 @@ http_archive(
         "    visibility = ['//visibility:public'],",
         ")",
     ]),
-    sha256 = "789e4dd1be7e81e69dd148c281b283b8babbfcd47c4af2d7686b6570b7a45d1b",
-    url = "https://plugins.jetbrains.com/files/7322/106700/python-ce-203.6682.179.zip",
+    sha256 = "722fb54b503de61989d65bc544f25f03891614467e62f4faef677cefbcd51340",
+    url = "https://plugins.jetbrains.com/files/7322/114033/python-ce-203.7717.65.zip",
 )
 
 # Go plugin for IntelliJ UE. Required at compile-time for Bazel integration.
@@ -152,7 +138,7 @@ http_archive(
         "    visibility = ['//visibility:public'],",
         ")",
     ]),
-    sha256 = "af4ad5070d27788bece5bb9acb66d90acf42008febbcdac5d794c06f78621b19",
+    sha256 = "1f7c47c2a3f6799f921d077da1d056414c9f67bea568a2053dd0dbdc526933a3",
     url = "https://plugins.jetbrains.com/files/9568/87978/intellij-go-201.7846.76.189.zip",
 )
 
@@ -180,8 +166,8 @@ http_archive(
         "    visibility = ['//visibility:public'],",
         ")",
     ]),
-    sha256 = "4570ea6145590d92fa984e7ae5e7e75a0dc948dc2866e227f22986abed5527a3",
-    url = "https://plugins.jetbrains.com/files/9568/106609/go-203.6682.168.zip",
+    sha256 = "996231c0bdeedfe4ea2ae66f72e9687818004fc363a415f814cb58f4563579c3",
+    url = "https://plugins.jetbrains.com/files/9568/112071/go-203.7717.11.zip",
 )
 
 # Scala plugin for IntelliJ CE. Required at compile-time for scala-specific features.
@@ -222,17 +208,8 @@ http_archive(
         "    visibility = ['//visibility:public'],",
         ")",
     ]),
-    sha256 = "4924ccda4a5d6ee830813efb86966bed8f7caf5a19e9cc1b27fa4e288e57a250",
-    url = "https://plugins.jetbrains.com/files/1347/105697/scala-intellij-bin-2020.3.18.zip",
-)
-
-# The plugin api for Android Studio 4.1. This is required to build ASwB,
-# and run integration tests.
-http_archive(
-    name = "android_studio_4_1",
-    build_file = "@//intellij_platform_sdk:BUILD.android_studio41",
-    sha256 = "68032184959c54576f119b7c7c8ded175d848374f3954fa450530d78260dd68b",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/4.1.1.0/android-studio-ide-201.6953283-linux.tar.gz",
+    sha256 = "d6411ae778eea6b04d8e27365925448851dc83852a9ed52317094d3442c84d7e",
+    url = "https://plugins.jetbrains.com/files/1347/113954/scala-intellij-bin-2020.3.23.zip",
 )
 
 # The plugin api for Android Studio 4.2. This is required to build ASwB,
@@ -240,8 +217,8 @@ http_archive(
 http_archive(
     name = "android_studio_4_2",
     build_file = "@//intellij_platform_sdk:BUILD.android_studio42",
-    sha256 = "3f322d40ad5c0cb8644627320c4c3d817f4ba1cf7740a411d2efa566b0c38481",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/4.2.0.20/android-studio-ide-202.7094744-linux.tar.gz",
+    sha256 = "ab67c136edad5ae269da4d06bc685ddc0436626481b5f33e272974cd429ffc57",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/4.2.0.22/android-studio-ide-202.7188722-linux.tar.gz",
 )
 
 # The plugin api for Android Studio 2020.3. This is required to build ASwB,
@@ -405,11 +382,11 @@ bazel_external_dependency_archive(
 # LICENSE: The Apache Software License, Version 2.0
 http_archive(
     name = "rules_proto",
-    sha256 = "4d421d51f9ecfe9bf96ab23b55c6f2b809cbaf0eea24952683e397decfbd0dd0",
-    strip_prefix = "rules_proto-f6b8d89b90a7956f6782a4a3609b2f0eee3ce965",
+    sha256 = "aa1ee19226f707d44bee44c720915199c20c84a23318bb0597ed4e5c873ccbd5",
+    strip_prefix = "rules_proto-40298556293ae502c66579620a7ce867d5f57311",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/rules_proto/archive/f6b8d89b90a7956f6782a4a3609b2f0eee3ce965.tar.gz",
-        "https://github.com/bazelbuild/rules_proto/archive/f6b8d89b90a7956f6782a4a3609b2f0eee3ce965.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_proto/archive/40298556293ae502c66579620a7ce867d5f57311.tar.gz",
+        "https://github.com/bazelbuild/rules_proto/archive/40298556293ae502c66579620a7ce867d5f57311.tar.gz",
     ],
 )
 
