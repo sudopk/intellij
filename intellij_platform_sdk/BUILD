@@ -354,6 +354,7 @@ java_library(
     exports = [
         "//third_party:truth",
         "@bytebuddy-agent//jar",
+        "@diffutils//jar",
         "@bytebuddy//jar",
         "@mockito//jar",
     ],
