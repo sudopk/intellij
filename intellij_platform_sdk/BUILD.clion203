@@ -2,13 +2,27 @@
 #
 # Plugin source jars for CLion, accessed remotely.
 
+load("@//intellij_platform_sdk:build_defs.bzl", "no_mockito_extensions")
+
 package(default_visibility = ["//visibility:public"])
 
 java_import(
     name = "sdk",
-    jars = glob(["clion-*/lib/*.jar"]),
+    jars = glob(
+        ["clion-*/lib/*.jar"],
+        exclude = glob([
+            # mockito-extensions needs to be removed from this jar.
+            "clion-*/lib/testFramework.jar",
+        ]),
+    ),
     tags = ["intellij-provided-by-sdk"],
+    exports = [":jars_without_mockito_extensions"],
     deps = ["@error_prone_annotations//jar"],
+)
+
+no_mockito_extensions(
+    name = "jars_without_mockito_extensions",
+    jars = glob(["clion-*/lib/testFramework.jar"]),
 )
 
 java_import(
